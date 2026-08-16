@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alfa Motors | Pre-Owned Cars</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
+body{background:#f5f5f5;color:#222}
+header{background:#111;color:#fff;padding:18px 7%;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+.logo{font-size:25px;font-weight:800;color:#e60000}.logo span{color:#fff}
+nav a{color:#fff;text-decoration:none;margin-left:18px;font-size:14px}
+.hero{min-height:500px;background:linear-gradient(#0009,#0009),url("images/hero.jpg") center/cover;display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;padding:30px}
+.hero h1{font-size:50px;margin-bottom:15px}.hero h1 span{color:#e60000}.hero p{font-size:19px;margin-bottom:25px}
+.btn{display:inline-block;background:#e60000;color:#fff;padding:13px 22px;border-radius:6px;text-decoration:none;font-weight:bold;margin:5px}
+.btn.light{background:#fff;color:#111}
+section{padding:60px 7%}.title{text-align:center;font-size:32px;margin-bottom:10px}.sub{text-align:center;color:#666;margin-bottom:30px}
+.services,.cars{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.card{background:#fff;padding:28px;border-radius:12px;text-align:center;box-shadow:0 4px 18px #00000012}
+.icon{font-size:42px;margin-bottom:12px}.card h3{margin-bottom:10px}
+.car{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 18px #00000018}
+.car-img{height:190px;background:#ddd;display:flex;align-items:center;justify-content:center;font-size:60px}
+.car-info{padding:18px}.car-info h3{margin-bottom:8px}.price{font-size:20px;color:#e60000;font-weight:bold;margin:12px 0}
+.about{background:#111;color:#fff;text-align:center}.about p{max-width:800px;margin:auto;line-height:1.7;color:#ddd}
+.contact{background:#fff;max-width:800px;margin:auto;padding:30px;border-radius:12px;text-align:center;box-shadow:0 4px 18px #00000012}
+footer{background:#080808;color:#aaa;text-align:center;padding:24px}
+@media(max-width:800px){nav{display:none}.hero h1{font-size:36px}.services,.cars{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+<div class="logo">ALFA <span>MOTORS</span></div>
+<nav>
+<a href="#home">Home</a><a href="#cars">Cars</a><a href="#services">Services</a><a href="#about">About</a><a href="#contact">Contact</a>
+</nav>
+</header>
+
+<section class="hero" id="home">
+<div>
+<h1>Find Your <span>Perfect Car</span></h1>
+<p>Quality Pre-Owned Cars • Sale • Purchase • Exchange</p>
+<a href="#cars" class="btn">View Cars</a>
+<a href="#contact" class="btn light">Sell / Exchange</a>
+</div>
+</section>
+
+<section id="services">
+<h2 class="title">What We Do</h2>
+<p class="sub">Simple solutions for your next pre-owned car</p>
+<div class="services">
+<div class="card"><div class="icon">🚗</div><h3>Buy a Car</h3><p>Explore quality pre-owned cars at competitive prices.</p></div>
+<div class="card"><div class="icon">💰</div><h3>Sell Your Car</h3><p>Get a fair valuation and a simple selling process.</p></div>
+<div class="card"><div class="icon">🔄</div><h3>Exchange Your Car</h3><p>Exchange your old car and upgrade to another vehicle.</p></div>
+</div>
+</section>
+
+<section id="cars">
+<h2 class="title">Featured Cars</h2>
+<p class="sub">Sample listings — we'll replace these with your real cars.</p>
+<div class="cars">
+<div class="car"><div class="car-img">🚘</div><div class="car-info"><h3>Maruti Suzuki Swift</h3><p>2022 • Petrol • Manual</p><div class="price">₹5.50 Lakh</div><a href="#contact" class="btn">Enquire</a></div></div>
+<div class="car"><div class="car-img">🚙</div><div class="car-info"><h3>Hyundai Creta</h3><p>2021 • Petrol • Automatic</p><div class="price">₹10.25 Lakh</div><a href="#contact" class="btn">Enquire</a></div></div>
+<div class="car"><div class="car-img">🚗</div><div class="car-info"><h3>Tata Nexon</h3><p>2023 • Petrol • Manual</p><div class="price">₹8.20 Lakh</div><a href="#contact" class="btn">Enquire</a></div></div>
+</div>
+</section>
+
+<section class="about" id="about">
+<h2 class="title">Why Alfa Motors?</h2>
+<p>Alfa Motors makes buying, selling and exchanging pre-owned cars simple and transparent. We aim to help customers find the right car with confidence and convenience.</p>
+</section>
+
+<section id="contact">
+<h2 class="title">Contact Alfa Motors</h2>
+<p class="sub">Interested in buying, selling or exchanging a car?</p>
+<div class="contact">
+<h3>Let's Talk About Your Car</h3><br>
+<p>📞 Call us for car enquiries</p><p>💬 WhatsApp us for a quick response</p><br>
+<a href="tel:+919235702436" class="btn">Call Alfa Motors</a>
+<a href="https://wa.me/919235702436" class="btn">WhatsApp</a>
+</div>
+</section>
+
+<footer>© 2026 Alfa Motors • Pre-Owned Cars • Sale • Purchase • Exchange</footer>
+</body>
+</html>
