@@ -123,11 +123,18 @@ const carName = c => [c.year, c.brand, c.model].filter(Boolean).join(' ');
 async function loadCars() {
   const g = $('#carGrid');
   const none = t => { g.innerHTML = ''; const d = document.createElement('div'); d.className = 'empty'; d.style.gridColumn = '1/-1'; d.textContent = t; g.append(d); };
-  if (!connected()) return none('No cars are listed right now. Ask us on WhatsApp what is coming in.');
+  if (!connected()) {
+    CARS = (window.ALFA_CARS || []).filter(c => c.status === 'available');
+    if (!CARS.length) return none('No cars are listed right now. Ask us on WhatsApp what is coming in.');
+    $('#carFilters').hidden = false;
+    [...new Set(CARS.map(c => c.brand).filter(Boolean))].sort().forEach(b => { const o = document.createElement('option'); o.textContent = b; $('#fBrand').append(o); });
+    return showCars();
+  }
   try {
     const r = await fetch(C.supabaseUrl + '/rest/v1/preowned_vehicles?status=eq.available&select=*&order=created_at.desc', { headers: { apikey: C.supabaseKey, Authorization: 'Bearer ' + C.supabaseKey } });
     CARS = r.ok ? await r.json() : [];
   } catch (e) { CARS = []; }
+  if (!CARS.length) CARS = (window.ALFA_CARS || []).filter(c => c.status === 'available');
   if (!CARS.length) return none('No cars are listed right now. Ask us on WhatsApp what is coming in.');
   $('#carFilters').hidden = false;
   [...new Set(CARS.map(c => c.brand).filter(Boolean))].sort().forEach(b => { const o = document.createElement('option'); o.textContent = b; $('#fBrand').append(o); });
