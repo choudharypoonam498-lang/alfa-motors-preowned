@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>Alfa Motors Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+body{padding:0 0 60px}.top{display:flex;justify-content:space-between;align-items:center;padding:14px 0}
+.item{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:10px;margin-bottom:10px}
+.car{grid-template-columns:90px 1fr}.car img{width:90px;height:70px;object-fit:cover;border-radius:8px;background:#000}
+.acts{display:flex;flex-wrap:wrap;gap:8px}.acts .btn,.acts select{min-height:38px;padding:0 12px;font-size:.85rem}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap}.thumbs div{position:relative}.thumbs img{width:78px;height:60px;object-fit:cover;border-radius:8px}
+.thumbs button{position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;border:0;background:var(--red);color:#fff;cursor:pointer}
+.kv{font-size:.9rem;color:var(--mute)}.kv b{color:var(--text)}
+.pill{display:inline-block;font-size:.75rem;padding:2px 10px;border-radius:99px;background:var(--panel2);border:1px solid var(--line)}
+</style></head><body>
+<div class="wrap">
+<div class="top"><div class="brand">ALFA <b>MOTORS</b> Admin</div><button class="btn" id="out" style="display:none;min-height:40px">Sign out</button></div>
+
+<div id="loginBox" class="formbox"><h2 style="font-size:2rem">Admin sign in</h2>
+<form id="login"><label>Email<input name="email" type="email" required autocomplete="username"></label><label>Password<input name="password" type="password" required autocomplete="current-password"></label>
+<button class="btn red" type="submit">Sign in</button><div class="msg" id="loginMsg"></div></form></div>
+
+<div id="app" style="display:none">
+<div class="tabs" id="tabs"><button class="btn on" data-t="cars">Cars</button><button class="btn" data-t="roadside_requests">Roadside</button><button class="btn" data-t="bookings">Bookings</button><button class="btn" data-t="car_leads">Sell leads</button><button class="btn" data-t="reviews">Reviews</button></div>
+
+<div id="p-cars">
+  <div class="formbox" style="max-width:none"><h3 id="formTitle" style="font-size:1.8rem;margin-bottom:10px">Add a car</h3>
+  <form id="carForm">
+    <div class="row"><label>Brand<input name="brand" required placeholder="Maruti Suzuki"></label><label>Model<input name="model" required placeholder="Wagon R"></label></div>
+    <div class="row"><label>Year<input name="year" type="number" inputmode="numeric"></label><label>KM driven<input name="km" type="number" inputmode="numeric"></label></div>
+    <div class="row"><label>Fuel<select name="fuel"><option>Petrol</option><option>Diesel</option><option>CNG</option><option>Electric</option></select></label><label>Transmission<select name="transmission"><option>Manual</option><option>Automatic</option></select></label></div>
+    <div class="row"><label>Price (₹)<input name="price" type="number" inputmode="numeric"></label><label>Owners<input name="owners" placeholder="1st owner"></label></div>
+    <label>Location<input name="location" value="Rohaniya, Varanasi"></label>
+    <label>Features (separate with commas)<textarea name="features" placeholder="Power steering, AC, Music system"></textarea></label>
+    <label>Inspection notes<textarea name="inspection" placeholder="What Alfa checked on this car"></textarea></label>
+    <label>Status<select name="status"><option value="available">Available (shown on website)</option><option value="sold">Sold (hidden)</option><option value="hidden">Hidden</option></select></label>
+    <div class="thumbs" id="thumbs"></div>
+    <label>Add photos (you can pick many)<input id="files" type="file" accept="image/*" multiple></label>
+    <div class="acts"><button class="btn red" type="submit" id="saveBtn">Save car</button><button class="btn" type="button" id="cancelEdit" style="display:none">Cancel edit</button></div>
+    <div class="msg" id="carMsg"></div>
+  </form></div>
+  <h3 style="font-size:1.8rem;margin:24px 0 10px">Your cars</h3><div id="carList"></div>
+</div>
+<div id="p-other" style="display:none"><div id="list"></div></div>
+</div></div>
+
+<script src="config.js"></script>
+<script>
+const C=window.ALFA,$=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+let tok=sessionStorage.getItem('tok'),editId=null,photos=[],cars=[];
+const msg=(el,t,x)=>{el.className='msg '+t;el.textContent=x};
+const fmt=p=>p?'₹'+Number(p).toLocaleString('en-IN'):'—';
+async function api(path,opt={}){
+  const r=await fetch(C.supabaseUrl+path,{...opt,headers:{apikey:C.supabaseKey,Authorization:'Bearer '+(tok||C.supabaseKey),...(opt.headers||{})}});
+  if(r.status===401){signOut();throw new Error('Session ended. Please sign in again.')}
+  if(!r.ok)throw new Error(await r.text());
+  const t=await r.text();return t?JSON.parse(t):null}
+function signOut(){tok=null;sessionStorage.removeItem('tok');$('#app').style.display='none';$('#out').style.display='none';$('#loginBox').style.display=''}
+$('#out').onclick=signOut;
+if(!C.supabaseUrl||!C.supabaseKey){msg($('#loginMsg'),'warn','Database is not connected yet. Fill supabaseUrl and supabaseKey in config.js first.')}
+$('#login').onsubmit=async e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));
+  try{const r=await fetch(C.supabaseUrl+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:C.supabaseKey,'Content-Type':'application/json'},body:JSON.stringify(d)});
+    const j=await r.json();if(!r.ok)throw new Error('Wrong email or password.');tok=j.access_token;sessionStorage.setItem('tok',tok);await start()}
+  catch(err){msg($('#loginMsg'),'err',err.message)}};
+async function start(){
+  try{const ok=await api('/rest/v1/rpc/is_admin',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    if(ok!==true){signOut();return msg($('#loginMsg'),'err','This account is not an admin. Add its email to admin_emails in Supabase.')}}
+  catch(e){return msg($('#loginMsg'),'err',e.message)}
+  $('#loginBox').style.display='none';$('#app').style.display='';$('#out').style.display='';loadCars()}
+$$('#tabs button').forEach(b=>b.onclick=()=>{$$('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  const cars=b.dataset.t==='cars';$('#p-cars').style.display=cars?'':'none';$('#p-other').style.display=cars?'none':'';if(!cars)loadList(b.dataset.t)});
+
+// ---- cars
+async function loadCars(){cars=await api('/rest/v1/preowned_vehicles?select=*&order=created_at.desc');const box=$('#carList');box.innerHTML='';
+  if(!cars.length){box.innerHTML='<div class="empty">No cars added yet. Use the form above.</div>';return}
+  cars.forEach(c=>{const d=document.createElement('div');d.className='item car';
+    const im=document.createElement('img');im.src=(c.photos||[])[0]||'';im.alt='';
+    const r=document.createElement('div');
+    const t=document.createElement('b');t.textContent=[c.year,c.brand,c.model].filter(Boolean).join(' ');
+    const k=document.createElement('div');k.className='kv';k.textContent=[fmt(c.price),c.km?c.km.toLocaleString('en-IN')+' km':'',c.fuel,c.transmission].filter(Boolean).join(' · ');
+    const s=document.createElement('span');s.className='pill';s.textContent=c.status;
+    const a=document.createElement('div');a.className='acts';
+    const mk=(l,f)=>{const b=document.createElement('button');b.className='btn';b.textContent=l;b.onclick=f;a.append(b)};
+    mk('Edit',()=>edit(c));
+    mk(c.status==='available'?'Mark sold':'Make available',async()=>{await api('/rest/v1/preowned_vehicles?id=eq.'+c.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:c.status==='available'?'sold':'available'})});loadCars()});
+    mk('Delete',async()=>{if(confirm('Delete this car permanently?')){await api('/rest/v1/preowned_vehicles?id=eq.'+c.id,{method:'DELETE'});loadCars()}});
+    r.append(t,k,s,a);d.append(im,r);box.append(d)})}
+function drawThumbs(){const t=$('#thumbs');t.innerHTML='';photos.forEach((u,i)=>{const d=document.createElement('div');const im=document.createElement('img');im.src=u;im.alt='';
+  const x=document.createElement('button');x.type='button';x.textContent='×';x.setAttribute('aria-label','Remove photo');x.onclick=()=>{photos.splice(i,1);drawThumbs()};d.append(im,x);t.append(d)})}
+function edit(c){editId=c.id;photos=[...(c.photos||[])];const f=$('#carForm');
+  ['brand','model','year','km','fuel','transmission','price','owners','location','features','inspection','status'].forEach(k=>f.elements[k].value=c[k]??'');
+  $('#formTitle').textContent='Edit car';$('#saveBtn').textContent='Save changes';$('#cancelEdit').style.display='';drawThumbs();scrollTo({top:0,behavior:'smooth'})}
+function reset(){editId=null;photos=[];$('#carForm').reset();$('#carForm').elements.location.value='Rohaniya, Varanasi';$('#formTitle').textContent='Add a car';$('#saveBtn').textContent='Save car';$('#cancelEdit').style.display='none';drawThumbs()}
+$('#cancelEdit').onclick=reset;
+async function shrink(file){const b=await createImageBitmap(file);const s=Math.min(1,1400/b.width);const c=document.createElement('canvas');c.width=Math.round(b.width*s);c.height=Math.round(b.height*s);
+  c.getContext('2d').drawImage(b,0,0,c.width,c.height);return new Promise(r=>c.toBlob(r,'image/jpeg',.82))}
+$('#carForm').onsubmit=async e=>{e.preventDefault();const m=$('#carMsg'),btn=$('#saveBtn');btn.disabled=true;
+  try{const f=e.target,files=[...$('#files').files];const urls=[];
+    for(let i=0;i<files.length;i++){msg(m,'warn','Uploading photo '+(i+1)+' of '+files.length+'…');const blob=await shrink(files[i]);
+      const name=Date.now()+'-'+Math.random().toString(36).slice(2,8)+'.jpg';
+      await api('/storage/v1/object/cars/'+name,{method:'POST',headers:{'Content-Type':'image/jpeg'},body:blob});
+      urls.push(C.supabaseUrl+'/storage/v1/object/public/cars/'+name)}
+    const g=k=>f.elements[k].value.trim();
+    const row={brand:g('brand'),model:g('model'),year:+g('year')||null,km:+g('km')||null,fuel:g('fuel'),transmission:g('transmission'),price:+g('price')||null,owners:g('owners'),location:g('location'),features:g('features'),inspection:g('inspection'),status:g('status'),photos:[...photos,...urls]};
+    msg(m,'warn','Saving…');
+    await api('/rest/v1/preowned_vehicles'+(editId?'?id=eq.'+editId:''),{method:editId?'PATCH':'POST',headers:{'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(row)});
+    msg(m,'ok','Saved. '+(row.status==='available'?'It is now on the website.':'It is not shown on the website.'));reset();$('#files').value='';loadCars()}
+  catch(err){msg(m,'err','Could not save: '+err.message)}btn.disabled=false};
+
+// ---- requests / reviews
+const LISTS={roadside_requests:{title:'Roadside requests',f:['problem','car','registration','location_text','name','phone','description'],st:['pending','assigned','on the way','arrived','completed','cancelled']},
+ bookings:{title:'Bookings',f:['service','car','registration','preferred_date','preferred_time','name','phone','message'],st:['pending','confirmed','in service','completed','cancelled']},
+ car_leads:{title:'Sell-your-car leads',f:['car','registration','year','km','fuel','expected_price','name','phone','notes'],st:['new','contacted','inspected','bought','closed']},
+ reviews:{title:'Reviews',f:['customer_name','vehicle_service','rating','body']}};
+async function loadList(t){const box=$('#list'),cfg=LISTS[t];box.innerHTML='<div class="empty">Loading…</div>';
+  try{const rows=await api('/rest/v1/'+t+'?select=*&order=created_at.desc&limit=100');box.innerHTML='';
+    if(!rows.length){box.innerHTML='<div class="empty">No '+cfg.title.toLowerCase()+' yet.</div>';return}
+    rows.forEach(r=>{const d=document.createElement('div');d.className='item';
+      const h=document.createElement('b');h.textContent=new Date(r.created_at).toLocaleString('en-IN');d.append(h);
+      cfg.f.forEach(k=>{if(r[k]===null||r[k]===''||r[k]===undefined)return;const p=document.createElement('div');p.className='kv';const b=document.createElement('b');b.textContent=k.replace(/_/g,' ')+': ';p.append(b,document.createTextNode(String(r[k])));d.append(p)});
+      if(r.latitude){const a=document.createElement('a');a.className='btn';a.target='_blank';a.rel='noopener';a.href='https://maps.google.com/?q='+r.latitude+','+r.longitude;a.textContent='Open GPS location';d.append(a)}
+      const acts=document.createElement('div');acts.className='acts';
+      if(r.phone){const c=document.createElement('a');c.className='btn';c.href='tel:'+r.phone;c.textContent='Call';const w=document.createElement('a');w.className='btn';w.target='_blank';w.rel='noopener';w.href='https://wa.me/91'+String(r.phone).replace(/\D/g,'').slice(-10);w.textContent='WhatsApp';acts.append(c,w)}
+      if(cfg.st){const s=document.createElement('select');cfg.st.forEach(x=>{const o=document.createElement('option');o.textContent=x;o.selected=x===r.status;s.append(o)});
+        s.onchange=()=>api('/rest/v1/'+t+'?id=eq.'+r.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:s.value})});acts.append(s)}
+      if(t==='reviews'){const b=document.createElement('button');b.className='btn';b.textContent=r.approved?'Hide review':'Approve review';b.onclick=async()=>{await api('/rest/v1/reviews?id=eq.'+r.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({approved:!r.approved})});loadList(t)};acts.append(b)}
+      d.append(acts);box.append(d)})}
+  catch(e){box.innerHTML='';const m=document.createElement('div');m.className='msg err';m.textContent=e.message;box.append(m)}}
+if(tok&&C.supabaseUrl)start();
+</script></body></html>
